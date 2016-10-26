@@ -10,13 +10,13 @@ Dependencies
 freeTds, clone and compile FreeTDS module and map the path to the project.
 https://github.com/FreeTDS/freetds
 
-/************************ Static Function 1 *******************************/
+####################### Static Function 1 ##########################
 Below static functions can be used to get your script executed.
 Returns 0 in case of success and 1 in case of Fail
 
 TDSLib::TDSLibClient::tdsExecuteQuery(host, user, pass, appname, database, script);
 
-/************************ Static Function 2 *******************************/
+####################### Static Function 2 ##########################
 Below static functions can be used to get your script executed and fetch records.
 Pass two variables as shown in below example, in success state two variables will be packed with data.
 Returns 0 in case of success and 1 in case of Fail
@@ -25,7 +25,7 @@ vector<vector<string>> fieldValue;
 
 TDSLib::TDSLibClient::tdsExecuteQueryandFetch(host, user, pass, appname, database, script, [&](vector<string> fName, vector<vector<string>> fValue) {fieldName = fName; fieldValue = fValue;});
 
-/************************ Static Function 3 *******************************/
+####################### Static Function 3 ##########################
 Below static function can be used for BulkCopy
 Input Parameter "loglist" is optional and should hold the fields which needs to be logged.
 Input parameter "Bindings" should contain "Column Name" and its "type".
