@@ -31,7 +31,10 @@ Input Parameter "file" should hold the actual Bulk of records.
 vector<std::pair<string, int>> Bindings = { { "ColunmName1", 127 },{ "ColunmName2", 39 },{ "ColunmName3", 39 },{ "ColunmName4", 39 } };
 vector<string> loglist = { "Field1", "Field3" };
 vector<vector<string>> file;
+
 TDSLib::TDSLibClient::tdsBulkCopy(host, user, pass, appname, database, schemaName, tableName, file, Bindings, loglist);
 
 
-Functions TdsLogerr() and TdsLogwarn() can be updated upto your project flavour, like storing into a log file.
+Note :-
+Lamdas TdsLogerr() and TdsLogwarn() can be updated upto your project flavour, like storing into a log file.
+
