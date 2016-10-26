@@ -1,5 +1,5 @@
 # FreeTDS-Lib
-A Convenient library to communicate with FreeTDS
+A Convenient library to communicate with FreeTDS, please open in "Raw" view and read.
 
 This is a LIB module which gives you option to get your SQL tasks done by just providing necessary data to provided static functions.
 The LIB takes care of communicating with DB through FreeTDS and does all operations and returns you the success status.
