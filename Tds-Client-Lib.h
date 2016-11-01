@@ -12,21 +12,19 @@ Date                                        Description
 ******************************* End of File Header ***********************/
 
 #pragma once
-#include <iostream>
 #include <sstream>
 #include <vector>
 #include <functional>
 #include <algorithm>
-
 #include <sybfront.h>
+#include "spdlog/spdlog.h"
 
 using namespace std;
 
 namespace TDSLib {
 
-	auto TdsLogerr = [](auto message) { cout << message << endl; };
-	auto TdsLogwarn = [](auto message) { cout << message << endl; };
-
+	auto spdLogerr = [](auto message) { spdlog::get("logger")->error() << message; };
+	auto spdLogwarn = [](auto message) { spdlog::get("logger")->warn() << message; };
 	typedef vector<vector<string>> CsvFile;
 
 	class TDSLibClient {
@@ -37,16 +35,16 @@ namespace TDSLib {
 		Function Name   : tdsBulkCopy
 		Function Scope  : Static
 		Input Parameter : const char* _host                       -> Host Information
-						  const char* _user                       -> User Id
-						  const char* pass                        -> Pass
-						  const char* appname                     -> Application Name
-						  const char* database                    -> DataBase
-						  const char* schema                      -> Schema
-						  const char* table                       -> Table name
-						  const char* file                        -> File, which will be Bulk Copied
-						  const char* bindings                    -> Bindings
-						  const char* loglist                     -> List of field names which needs to be logged.
-   	    Return Value    : int -> zero in case of success, 1 in case of fail
+		const char* _user                       -> User Id
+		const char* pass                        -> Pass
+		const char* appname                     -> Application Name
+		const char* database                    -> DataBase
+		const char* schema                      -> Schema
+		const char* table                       -> Table name
+		const char* file                        -> File, which will be Bulk Copied
+		const char* bindings                    -> Bindings
+		const char* loglist                     -> List of field names which needs to be logged.
+		Return Value    : int -> zero in case of success, 1 in case of fail
 		Description     : Creates object and do Bulk Copy of the data availabe in File
 		******************************* End of Function Header ***********************/
 		static int tdsBulkCopy(const string& host,
@@ -64,13 +62,13 @@ namespace TDSLib {
 				if (!client.prepareBulkcopy(database, schema, table)) {
 					if (!client.bulkCopy(file, bindings, loglist)) {
 						stringstream msg; msg << __func__ << " : Success";
-						TdsLogerr(msg.str());
+						//spdLogerr(msg.str());
 						return 0;
 					}
 				}
 			}
 			stringstream msg; msg << __func__ << " : Failed";
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
@@ -79,11 +77,11 @@ namespace TDSLib {
 		Function Name   : tdsExecuteQuery
 		Function Scope  : Static
 		Input Parameter : const char* _host                      -> Host Information
-						  const char* _user                      -> User Id
-						  const char* pass                       -> Pass
-						  const char* appname                    -> Application Name
-						  const char* database                   -> DataBase
-						  const char* sql                        -> SQL statement
+		const char* _user                      -> User Id
+		const char* pass                       -> Pass
+		const char* appname                    -> Application Name
+		const char* database                   -> DataBase
+		const char* sql                        -> SQL statement
 		Return Value    : int -> zero in case of success, 1 in case of fail
 		Description     : Creates object and get the script executed
 		******************************* End of Function Header ***********************/
@@ -97,12 +95,12 @@ namespace TDSLib {
 			if (!client.IsInitialized) {
 				if (!client.executeCommand(database, sql)) {
 					stringstream msg; msg << __func__ << " : Success";
-					TdsLogerr(msg.str());
+					//spdLogerr(msg.str());
 					return 0;
 				}
 			}
 			stringstream msg; msg << __func__ << " : Failed : " << sql;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
@@ -111,12 +109,12 @@ namespace TDSLib {
 		Function Name   : tdsExecuteQueryandFetch
 		Function Scope  : Static
 		Input Parameter : const char* _host                                      -> Host Information
-					   	  const char* _user                                      -> User Id
-						  const char* pass                                       -> Pass
-						  const char* appname                                    -> Application Name
-						  const char* database                                   -> DataBase
-						  const char* sql                                        -> SQL statement
-						  function<void(vector<string>&, CsvFile&)> OnTable      -> CallBack function to store retrived values
+		const char* _user                                      -> User Id
+		const char* pass                                       -> Pass
+		const char* appname                                    -> Application Name
+		const char* database                                   -> DataBase
+		const char* sql                                        -> SQL statement
+		function<void(vector<string>&, CsvFile&)> OnTable      -> CallBack function to store retrived values
 		Return Value    : int -> zero in case of success, 1 in case of fail
 		Description     : Creates object and get the script executed
 		******************************* End of Function Header ***********************/
@@ -132,13 +130,13 @@ namespace TDSLib {
 				if (!client.executeCommand(database, sql)) {
 					if (!client.fetchResult(OnTable)) {
 						stringstream msg; msg << __func__ << " : Success";
-						TdsLogerr(msg.str());
+						//spdLogerr(msg.str());
 						return 0;
 					}
 				}
 			}
 			stringstream msg; msg << __func__ << " : Failed : " << sql;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
@@ -152,7 +150,7 @@ namespace TDSLib {
 
 		TDSLibClient() = default;
 		TDSLibClient(const TDSLibClient&) = delete;
-		TDSLibClient& operator=(const TDSLibClient&) = delete; 
+		TDSLibClient& operator=(const TDSLibClient&) = delete;
 		~TDSLibClient();
 
 		int IsInitialized = 0;
@@ -167,13 +165,15 @@ namespace TDSLib {
 
 		if ((NULL == dbproc) || DBDEAD(dbproc)) {
 			msg << " dbproc is NULL error : " << dberrstr;
-		} else if ((oserr != DBNOERR)) {
+		}
+		else if ((oserr != DBNOERR)) {
 			msg << " Operating-system error : " << oserr << dberrstr;
-		} else {
+		}
+		else {
 			msg << " DB-Library error : " << dberr << dberrstr;
 		}
 
-		TdsLogerr(msg.str());
+		spdLogerr(msg.str());
 		dbexit();
 		return(INT_CANCEL);
 	}
@@ -190,22 +190,22 @@ namespace TDSLib {
 			if (0 < line) { msg << ", line: '" << line << "'"; }
 			if (msgtext) { msg << ", message text: '" << msgtext << "'"; }
 
-			TdsLogwarn(msg.str());
+			spdLogwarn(msg.str());
 		}
 		return(0);
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : initAndConnect
-		Function Scope  : Public
-		Input Parameter : const char* _host                       -> Host Information
-						  const char* _user                       -> User Id
-						  const char* pass                        -> Pass
-						  const char* appname                     -> Application Name
-						  const bool bcopy                        -> should be enabled only in case of Bulk copy
-		Return Value    : int                                     -> zero in case of success, 1 in case of fail
-		Description     : Performs Initialization operation
+	Class           : TDSLib::TDSLibClient
+	Function Name   : initAndConnect
+	Function Scope  : Public
+	Input Parameter : const char* _host                       -> Host Information
+	const char* _user                       -> User Id
+	const char* pass                        -> Pass
+	const char* appname                     -> Application Name
+	const bool bcopy                        -> should be enabled only in case of Bulk copy
+	Return Value    : int                                     -> zero in case of success, 1 in case of fail
+	Description     : Performs Initialization operation
 	******************************* End of Function Header ***********************/
 	int TDSLib::TDSLibClient::initAndConnect(const string& host, const string& user, const string& password, const string& appname, const bool bcopy) {
 		stringstream msg; msg << __func__;
@@ -213,8 +213,8 @@ namespace TDSLib {
 		IsBulkCopy = bcopy;
 		if (FAIL == dbinit()) {
 			IsInitialized = 1;
-			msg << " : failed to initialize the driver"; 
-			TdsLogerr(msg.str());
+			msg << " : failed to initialize the driver";
+			spdLogerr(msg.str());
 			return 1;
 		}
 		dberrhandle((EHANDLEFUNC)Tds_Error_handler);
@@ -224,7 +224,7 @@ namespace TDSLib {
 		if (NULL == login) {
 			IsInitialized = 1;
 			msg << " : connect() unable to allocate login structure";
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
@@ -241,55 +241,55 @@ namespace TDSLib {
 		if ((DBPROCESS *)NULL == (dbproc = dbopen(login, host.c_str()))) {
 			IsInitialized = 1;
 			msg << " : Can't connect to server : " << host;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
 		return 0;
 	};
-	
+
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : executeCommand
-		Function Scope  : Public
-		Input Parameter : const char* database                  -> Database Name
-						  const char* sql                       -> SQL Query
-		Return Value    : int -> zero in case of success, 1 in case of fail
-		Description     : Executes the given SQL
+	Class           : TDSLib::TDSLibClient
+	Function Name   : executeCommand
+	Function Scope  : Public
+	Input Parameter : const char* database                  -> Database Name
+	const char* sql                       -> SQL Query
+	Return Value    : int -> zero in case of success, 1 in case of fail
+	Description     : Executes the given SQL
 	******************************* End of Function Header ***********************/
 	int TDSLib::TDSLibClient::executeCommand(const string &database, const string &sql) {
 		stringstream msg; msg << __func__;
 
 		if (FAIL == dbuse(dbproc, database.c_str())) {
 			msg << " : failed to use a database " << database;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
 		if (FAIL == dbcmd(dbproc, sql.c_str())) {
 			msg << " : failed to process a query " << sql;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 
 		if (FAIL == dbsqlexec(dbproc)) {
 			msg << " : failed to execute a query " << sql;
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 		return 0;
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : prepareBulkcopy
-		Function Scope  : Public
-		Input Parameter : const char* database                    -> Database Name
-						  const char* schemaName                  -> Schema
-						  const char* tableName                   -> Table Name
-		Return Value    : int                                     -> zero in case of success, 1 in case of fail
-		Description     : Prepare for Bulk Copy
-		******************************* End of Function Header ***********************/
+	Class           : TDSLib::TDSLibClient
+	Function Name   : prepareBulkcopy
+	Function Scope  : Public
+	Input Parameter : const char* database                    -> Database Name
+	const char* schemaName                  -> Schema
+	const char* tableName                   -> Table Name
+	Return Value    : int                                     -> zero in case of success, 1 in case of fail
+	Description     : Prepare for Bulk Copy
+	******************************* End of Function Header ***********************/
 	int TDSLib::TDSLibClient::prepareBulkcopy(const string& database, const string& schemaName, const string& tableName) {
 		stringstream msg; msg << __func__;
 
@@ -310,22 +310,22 @@ namespace TDSLib {
 		string fullNamespace = database + "." + schemaName + "." + tableName;
 		if (FAIL == bcp_init(dbproc, fullNamespace.c_str(), NULL, "bcp.errors", DB_IN)) {
 			msg << " : Failed to prepare bulkcopy ";
-			TdsLogerr(msg.str());
+			spdLogerr(msg.str());
 			return 1;
 		}
 		return 0;
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : bulkCopy
-		Function Scope  : Public
-		Input Parameter : CsvFile& file                          -> File to be Bulk Copied
-						  vector<pair<string, int>>& binding     -> Binding
-						  vector<string>& loglist                -> List of fields to be logged
-		Return Value    : int                                    -> zero in case of success, 1 in case of fail
-		Description     : Perform Bulk Copy
-		******************************* End of Function Header ***********************/
+	Class           : TDSLib::TDSLibClient
+	Function Name   : bulkCopy
+	Function Scope  : Public
+	Input Parameter : CsvFile& file                          -> File to be Bulk Copied
+	vector<pair<string, int>>& binding     -> Binding
+	vector<string>& loglist                -> List of fields to be logged
+	Return Value    : int                                    -> zero in case of success, 1 in case of fail
+	Description     : Perform Bulk Copy
+	******************************* End of Function Header ***********************/
 	int TDSLib::TDSLibClient::bulkCopy(CsvFile& file, vector<pair<string, int>>& bindings, vector<string>& loglist) {
 		stringstream msg; msg << __func__ << "[";
 		for (auto& e : file) {
@@ -341,20 +341,19 @@ namespace TDSLib {
 
 		bcp_done(dbproc);
 		msg << "]" << " Bulkcopy sent";
-		TdsLogerr(msg.str());
+		spdLogerr(msg.str());
 		return 0;
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : ToTrimmedString
-		Function Scope  : Public
-		Input Parameter : char *begin       -> Callback function
-		                  char *end         -> Callback function
-		Return Value    : string            -> returns the trimmed string
-		Description     : Trim the provided string from begin to end and returns
+	Class           : TDSLib::TDSLibClient
+	Function Name   : ToTrimmedString
+	Function Scope  : Public
+	Input Parameter : char *begin       -> Starting point of the string
+	char *end         -> Ending point of the string
+	Return Value    : string            -> returns the trimmed string
+	Description     : Trim the provided string from begin to end and returns
 	******************************* End of Function Header ***********************/
-
 	string TDSLib::TDSLibClient::ToTrimmedString(char *begin, char *end) {
 		for (; begin < end && *begin == ' '; ++begin);
 		for (; begin < end && *(end - 1) == ' '; --end);
@@ -362,12 +361,12 @@ namespace TDSLib {
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : fetchResult
-		Function Scope  : Public
-		Input Parameter : function<void(vector<string>&, CsvFile&)> OnTable       -> Callback function
-		Return Value    : int                                                     -> zero in case of success, 1 in case of fail
-		Description     : Execute SQL and Fetch back the fields
+	Class           : TDSLib::TDSLibClient
+	Function Name   : fetchResult
+	Function Scope  : Public
+	Input Parameter : function<void(vector<string>&, CsvFile&)> OnTable       -> Callback function
+	Return Value    : int                                                     -> zero in case of success, 1 in case of fail
+	Description     : Execute SQL and Fetch back the fields
 	******************************* End of Function Header ***********************/
 	int TDSLib::TDSLibClient::fetchResult(function<void(vector<string>&, CsvFile&)> OnTable) {
 		stringstream msg; msg << __func__ << "[";
@@ -384,7 +383,7 @@ namespace TDSLib {
 
 			if (status == FAIL) {
 				msg << "failed to fetch a result";
-				TdsLogerr(msg.str());
+				spdLogerr(msg.str());
 				break;
 			}
 
@@ -411,14 +410,15 @@ namespace TDSLib {
 						auto data = dbdata(dbproc, i + 1);
 						if (data == NULL) {
 							row.push_back("NULL");
-						} else {
+						}
+						else {
 							auto type = dbcoltype(dbproc, i + 1);
 							auto length = dbdatlen(dbproc, i + 1);
 							vector<BYTE> buffer(max(32, 2 * length) + 2, 0);
 							auto count = dbconvert(dbproc, type, data, length, SYBCHAR, &buffer[0], buffer.size() - 1);
 							if (count == -1) {
 								msg << " failed to fetch column data, insufficient buffer space";
-								TdsLogerr(msg.str());
+								spdLogerr(msg.str());
 								break;
 							}
 							row.push_back(ToTrimmedString((char*)&buffer[0], (char*)&buffer[count]));
@@ -429,12 +429,12 @@ namespace TDSLib {
 
 				case BUF_FULL:
 					msg << " failed to fetch a row, the buffer is full";
-					TdsLogerr(msg.str());
+					spdLogerr(msg.str());
 					break;
 
 				case FAIL:
 					msg << " failed to fetch a row";
-					TdsLogerr(msg.str());
+					spdLogerr(msg.str());
 					break;
 
 				default:
@@ -447,27 +447,27 @@ namespace TDSLib {
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : TDSLibClient (Constructor)
-		Function Scope  : Public
-		Input Parameter : const char* _host                       -> Host Information
-						  const char* _user                       -> User Id
-						  const char* pass                        -> Pass
-						  const char* appname                     -> Application Name
-						  const bool bcopy                        -> should be enabled only in case of Bulk copy
-		Description     : Init function is executed
+	Class           : TDSLib::TDSLibClient
+	Function Name   : TDSLibClient (Constructor)
+	Function Scope  : Public
+	Input Parameter : const char* _host                       -> Host Information
+	const char* _user                       -> User Id
+	const char* pass                        -> Pass
+	const char* appname                     -> Application Name
+	const bool bcopy                        -> should be enabled only in case of Bulk copy
+	Description     : Init function is executed
 	******************************* End of Function Header ***********************/
 	TDSLibClient::TDSLibClient(const string& host, const string& user, const string& password, const string& appname, const bool bcopy) {
 		if (initAndConnect(host, user, password, appname, bcopy)) {
-			TdsLogerr("initialization  was not successfull");
+			spdLogerr("initialization  was not successfull");
 		}
 	}
 
 	/****************************** Function Header ******************************
-		Class           : TDSLib::TDSLibClient
-		Function Name   : TDSLibClient (Destructor)
-		Function Scope  : Public
-		Description     : Init function is executed
+	Class           : TDSLib::TDSLibClient
+	Function Name   : TDSLibClient (Destructor)
+	Function Scope  : Public
+	Description     : Init function is executed
 	******************************* End of Function Header ***********************/
 	TDSLibClient::~TDSLibClient() {
 		if (!IsBulkCopy) {
